@@ -15,7 +15,8 @@ services:
       - .:/var/www/html
 
     environment:
-      PHP_IDE_CONFIG: serverName=php-minimal
+      PHP_IDE_CONFIG: serverName=${PHP_IDE_SERVER_NAME}
+      XDEBUG_CLIENT_HOST: ${XDEBUG_CLIENT_HOST}      
 
     depends_on:
       - mariadb
@@ -49,10 +50,10 @@ services:
     container_name: php-minimal-mariadb
 
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
 
     volumes:
       - ./database:/var/lib/mysql
