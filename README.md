@@ -25,17 +25,18 @@ Minimal modern PHP development template with Docker, PHP-FPM, Nginx and MariaDB.
 cp .env.example .env
 ```
 
-Edit `.env` and set your database passwords and domain:
+Edit `.env` and set your values:
 
 | Variable | Description |
 |---|---|
 | `COMPOSE_PROJECT_NAME` | Docker Compose project name |
 | `APP_DOMAIN` | Local domain (default: `php-minimal.local`) |
+| `PHP_IDE_SERVER_NAME` | IDE server name for path mapping (default: `php-minimal`) |
 | `DB_DATABASE` | MariaDB database name |
 | `DB_USERNAME` | MariaDB user |
 | `DB_PASSWORD` | MariaDB user password |
 | `DB_ROOT_PASSWORD` | MariaDB root password |
-| `XDEBUG_CLIENT_HOST` | Host IP for Xdebug (WSL2/Docker Desktop) |
+| `XDEBUG_CLIENT_HOST` | Host IP for Xdebug — see [Debugging with Xdebug](#debugging-with-xdebug) |
 
 ### 2. Install dependencies
 
@@ -63,6 +64,8 @@ Add the following entry to your hosts file:
 
 The app is available at [https://php-minimal.local](https://php-minimal.local).
 
+> **Note:** The Nginx config and SSL certificates are set up for `php-minimal.local`. If you change `APP_DOMAIN`, update `docker/nginx/default.conf` and regenerate the certificates in `docker/nginx/certs/` accordingly.
+
 ## Project structure
 
 ```
@@ -75,6 +78,7 @@ The app is available at [https://php-minimal.local](https://php-minimal.local).
 │   └── index.php
 ├── src/App/            # Application source code (PSR-4: App\)
 ├── tests/              # PHPUnit tests (PSR-4: Tests\)
+├── .env.example        # Environment variable template
 ├── compose.yaml        # Docker Compose services
 ├── composer.json
 ├── phpunit.xml
@@ -89,6 +93,8 @@ The app is available at [https://php-minimal.local](https://php-minimal.local).
 | Nginx | `php-minimal-nginx` | 80, 443 |
 | MariaDB | `php-minimal-mariadb` | 3306 |
 
+Database credentials are taken from `.env` and passed to the MariaDB container via `MARIADB_*` environment variables.
+
 ## Development
 
 All helper scripts run commands inside the PHP container:
@@ -99,6 +105,7 @@ All helper scripts run commands inside the PHP container:
 | `./bin/build.sh` | Build and start containers |
 | `./bin/down.sh` | Stop containers |
 | `./bin/test.sh` | Run PHPUnit tests |
+| `./bin/phpunit.sh` | Run PHPUnit with optional arguments |
 | `./bin/coverage.sh` | Generate HTML coverage report in `coverage/` |
 | `./bin/analyse.sh` | Run PHPStan static analysis |
 | `./bin/cs-fix.sh` | Fix code style with PHP CS Fixer |
@@ -115,13 +122,29 @@ composer fix        # PHP CS Fixer
 
 ## Debugging with Xdebug
 
-Xdebug is pre-configured in the PHP container (port **9003**). A VS Code / Cursor launch configuration is included in `.vscode/launch.json`.
+Xdebug is pre-configured in the PHP container (port **9003**). The client host is controlled via `XDEBUG_CLIENT_HOST` in `.env` and passed to the container through Docker Compose.
 
-1. Start the Docker stack
-2. Start the **Listen for Xdebug** debug configuration in your IDE
-3. Set a breakpoint and open [https://php-minimal.local](https://php-minimal.local)
+A VS Code / Cursor launch configuration is included in `.vscode/launch.json`.
 
-If breakpoints are not hit, adjust `XDEBUG_CLIENT_HOST` in `.env` to match your host IP (e.g. `host.docker.internal` on Docker Desktop or your WSL2 gateway IP).
+### Setup
+
+1. Set `XDEBUG_CLIENT_HOST` in `.env` to your host IP:
+
+   | Platform | Typical value |
+   |---|---|
+   | Docker Desktop (macOS/Windows) | `host.docker.internal` or `192.168.65.254` |
+   | WSL2 / Linux | `host.docker.internal` (mapped via `extra_hosts` in `compose.yaml`) |
+
+2. Restart the stack after changing `.env`:
+
+   ```bash
+   ./bin/down.sh && ./bin/up.sh
+   ```
+
+3. Start the **Listen for Xdebug** debug configuration in your IDE
+4. Set a breakpoint and open [https://php-minimal.local](https://php-minimal.local)
+
+`PHP_IDE_SERVER_NAME` in `.env` sets the server name used by `PHP_IDE_CONFIG` inside the container. It should match the server name configured in your IDE for correct path mapping.
 
 ## License
 
