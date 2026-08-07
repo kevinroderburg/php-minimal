@@ -1,0 +1,61 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: php-minimal-php
+
+    working_dir: /var/www/html
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - .:/var/www/html
+
+    environment:
+      PHP_IDE_CONFIG: serverName=php-minimal
+
+    depends_on:
+      - mariadb
+
+    expose:
+      - "9000"
+
+
+  nginx:
+    image: nginx:1.27-alpine
+
+    container_name: php-minimal-nginx
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/certs:/etc/nginx/certs
+
+    depends_on:
+      - php
+      - mariadb
+
+
+  mariadb:
+    image: mariadb:11
+
+    container_name: php-minimal-mariadb
+
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+    volumes:
+      - ./database:/var/lib/mysql
+
+    ports:
+      - "3306:3306"      

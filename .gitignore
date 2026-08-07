@@ -1,0 +1,6 @@
+/.cursor/
+/.php-cs-fixer.cache
+/.phpunit.cache/
+/database/
+/vendor/
+/coverage/

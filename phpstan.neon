@@ -1,0 +1,10 @@
+parameters:
+    level: 8
+
+    paths:
+        - src
+        - tests
+
+    phpVersion: 80400
+
+    inferPrivatePropertyTypeFromConstructor: true
