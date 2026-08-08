@@ -46,12 +46,12 @@ final class MigrationRunnerTest extends TestCase
 
     public function testThrowsWhenMigrationsDirectoryDoesNotExist(): void
     {
-        $runner = new MigrationRunner($this->connectionFactory);
+        $migrationRunner = new MigrationRunner($this->connectionFactory);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Migrations directory does not exist');
+        $this->expectExceptionMessageIs('Migrations directory does not exist: /path/that/does/not/exist');
 
-        $runner->run('/path/that/does/not/exist');
+        $migrationRunner->run('/path/that/does/not/exist');
     }
 
     public function testRunsPendingMigrationsInOrder(): void
@@ -62,12 +62,12 @@ final class MigrationRunnerTest extends TestCase
             '002_add_name_column.sql' => "ALTER TABLE `{$table}` ADD COLUMN name VARCHAR(255) NOT NULL",
         ]);
 
-        $runner = new MigrationRunner($this->connectionFactory);
-        $runner->run($migrationsPath);
+        $migrationRunner = new MigrationRunner($this->connectionFactory);
+        $migrationRunner->run($migrationsPath);
 
         $pdo = $this->connectionFactory->create();
 
-        $this->assertSame(
+        self::assertSame(
             ['001_create_table.sql', '002_add_name_column.sql'],
             $this->getExecutedMigrationNames($pdo),
         );
@@ -88,14 +88,14 @@ final class MigrationRunnerTest extends TestCase
             '001_create_table.sql' => "CREATE TABLE `{$table}` (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY)",
         ]);
 
-        $runner = new MigrationRunner($this->connectionFactory);
+        $migrationRunner = new MigrationRunner($this->connectionFactory);
 
-        $runner->run($migrationsPath);
-        $runner->run($migrationsPath);
+        $migrationRunner->run($migrationsPath);
+        $migrationRunner->run($migrationsPath);
 
         $pdo = $this->connectionFactory->create();
 
-        $this->assertSame(['001_create_table.sql'], $this->getExecutedMigrationNames($pdo));
+        self::assertSame(['001_create_table.sql'], $this->getExecutedMigrationNames($pdo));
     }
 
     public function testThrowsWhenMigrationFails(): void
@@ -104,19 +104,19 @@ final class MigrationRunnerTest extends TestCase
             '001_invalid.sql' => 'CREATE TABLE this is not valid sql',
         ]);
 
-        $runner = new MigrationRunner($this->connectionFactory);
+        $migrationRunner = new MigrationRunner($this->connectionFactory);
 
         try {
-            $runner->run($migrationsPath);
-            $this->fail('Expected RuntimeException was not thrown');
+            $migrationRunner->run($migrationsPath);
+            self::fail('Expected RuntimeException was not thrown');
         } catch (RuntimeException $exception) {
-            $this->assertSame('Migration failed: 001_invalid.sql', $exception->getMessage());
-            $this->assertNotNull($exception->getPrevious());
+            self::assertSame('Migration failed: 001_invalid.sql', $exception->getMessage());
+            self::assertNotNull($exception->getPrevious());
         }
 
         $pdo = $this->connectionFactory->create();
 
-        $this->assertSame([], $this->getExecutedMigrationNames($pdo));
+        self::assertSame([], $this->getExecutedMigrationNames($pdo));
     }
 
     /**

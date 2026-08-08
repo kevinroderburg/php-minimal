@@ -18,9 +18,9 @@ final class ConnectionFactoryTest extends TestCase
 
         $pdo = $factory->create();
 
-        $this->assertInstanceOf(PDO::class, $pdo);
-        $this->assertSame(PDO::ERRMODE_EXCEPTION, $pdo->getAttribute(PDO::ATTR_ERRMODE));
-        $this->assertSame(PDO::FETCH_ASSOC, $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE));
+        self::assertInstanceOf(PDO::class, $pdo);
+        self::assertSame(PDO::ERRMODE_EXCEPTION, $pdo->getAttribute(PDO::ATTR_ERRMODE));
+        self::assertSame(PDO::FETCH_ASSOC, $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE));
     }
 
     public function testCreateUsesConfiguredDatabase(): void
@@ -31,10 +31,10 @@ final class ConnectionFactoryTest extends TestCase
         $pdo = $factory->create();
         $statement = $pdo->query('SELECT DATABASE()');
 
-        $this->assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(\PDOStatement::class, $statement);
 
         $databaseName = $statement->fetchColumn();
 
-        $this->assertSame($config->database, $databaseName);
+        self::assertSame($config->database, $databaseName);
     }
 }

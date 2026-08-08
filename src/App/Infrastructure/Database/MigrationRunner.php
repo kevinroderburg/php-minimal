@@ -48,9 +48,14 @@ final class MigrationRunner
     {
         $sql = file_get_contents($file);
 
+        // file_get_contents() only returns false on race conditions (file deleted between
+        // glob() and reading) or permission issues; not realistically testable for a
+        // locally-run CLI tool without a namespace function override.
+        // @codeCoverageIgnoreStart
         if ($sql === false) {
             throw new RuntimeException("Could not read migration file: {$file}");
         }
+        // @codeCoverageIgnoreEnd
 
         $pdo->beginTransaction();
 
@@ -88,9 +93,13 @@ final class MigrationRunner
 
         $files = glob($migrationsPath . '/*.sql');
 
+        // glob() returns false only on structural/config failures (empty results return []).
+        // This error state is non-reproducible in standard test environments.
+        // @codeCoverageIgnoreStart
         if ($files === false) {
             throw new RuntimeException("Could not read migrations directory: {$migrationsPath}");
         }
+        // @codeCoverageIgnoreEnd
 
         sort($files);
 
@@ -111,9 +120,10 @@ final class MigrationRunner
 
         $statement = $pdo->query($query);
 
-        if ($statement === false) {
-            return [];
-        }
+        // PDO::ATTR_ERRMODE is set to EXCEPTION (see ConnectionFactory), so query()
+        // throws on failure instead of returning false — this assertion documents
+        // that guarantee and narrows the type for static analysis.
+        assert($statement !== false);
 
         /** @var list<string> $migrations */
         $migrations = $statement->fetchAll(PDO::FETCH_COLUMN);

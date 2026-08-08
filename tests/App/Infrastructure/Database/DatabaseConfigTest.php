@@ -28,17 +28,17 @@ final class DatabaseConfigTest extends TestCase
 
     public function testConstructorStoresValues(): void
     {
-        $config = new DatabaseConfig(
+        $databaseConfig = new DatabaseConfig(
             host: 'db.example.com',
             database: 'my_app',
             username: 'app_user',
             password: 'secret',
         );
 
-        $this->assertSame('db.example.com', $config->host);
-        $this->assertSame('my_app', $config->database);
-        $this->assertSame('app_user', $config->username);
-        $this->assertSame('secret', $config->password);
+        self::assertSame('db.example.com', $databaseConfig->host);
+        self::assertSame('my_app', $databaseConfig->database);
+        self::assertSame('app_user', $databaseConfig->username);
+        self::assertSame('secret', $databaseConfig->password);
     }
 
     public function testFromEnvReadsAllVariables(): void
@@ -48,12 +48,12 @@ final class DatabaseConfigTest extends TestCase
         $this->setEnv('DB_USERNAME', 'test_user');
         $this->setEnv('DB_PASSWORD', 'test_password');
 
-        $config = DatabaseConfig::fromEnv();
+        $databaseConfig = DatabaseConfig::fromEnv();
 
-        $this->assertSame('test-host', $config->host);
-        $this->assertSame('test_database', $config->database);
-        $this->assertSame('test_user', $config->username);
-        $this->assertSame('test_password', $config->password);
+        self::assertSame('test-host', $databaseConfig->host);
+        self::assertSame('test_database', $databaseConfig->database);
+        self::assertSame('test_user', $databaseConfig->username);
+        self::assertSame('test_password', $databaseConfig->password);
     }
 
     public function testFromEnvUsesDefaultHostWhenNotSet(): void
@@ -63,9 +63,9 @@ final class DatabaseConfigTest extends TestCase
         $this->setEnv('DB_USERNAME', 'test_user');
         $this->setEnv('DB_PASSWORD', 'test_password');
 
-        $config = DatabaseConfig::fromEnv();
+        $databaseConfig = DatabaseConfig::fromEnv();
 
-        $this->assertSame('mariadb', $config->host);
+        self::assertSame('mariadb', $databaseConfig->host);
     }
 
     public function testFromEnvThrowsWhenDatabaseIsMissing(): void
@@ -76,7 +76,7 @@ final class DatabaseConfigTest extends TestCase
         $this->setEnv('DB_PASSWORD', 'test_password');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Missing required env var: DB_DATABASE');
+        $this->expectExceptionMessageIs('Missing required env var: DB_DATABASE');
 
         DatabaseConfig::fromEnv();
     }
@@ -89,7 +89,7 @@ final class DatabaseConfigTest extends TestCase
         $this->setEnv('DB_PASSWORD', 'test_password');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Missing required env var: DB_USERNAME');
+        $this->expectExceptionMessageIs('Missing required env var: DB_USERNAME');
 
         DatabaseConfig::fromEnv();
     }
@@ -102,7 +102,7 @@ final class DatabaseConfigTest extends TestCase
         $this->unsetEnv('DB_PASSWORD');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Missing required env var: DB_PASSWORD');
+        $this->expectExceptionMessageIs('Missing required env var: DB_PASSWORD');
 
         DatabaseConfig::fromEnv();
     }
