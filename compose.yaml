@@ -16,10 +16,15 @@ services:
 
     environment:
       PHP_IDE_CONFIG: serverName=${PHP_IDE_SERVER_NAME}
-      XDEBUG_CLIENT_HOST: ${XDEBUG_CLIENT_HOST}      
+      XDEBUG_CLIENT_HOST: ${XDEBUG_CLIENT_HOST}
+      DB_HOST: ${DB_HOST}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
 
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
 
     expose:
       - "9000"
@@ -41,7 +46,6 @@ services:
 
     depends_on:
       - php
-      - mariadb
 
 
   mariadb:
@@ -56,7 +60,17 @@ services:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
 
     volumes:
-      - ./database:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
 
     ports:
-      - "3306:3306"      
+      - "3306:3306"
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+volumes:
+  mariadb_data:
