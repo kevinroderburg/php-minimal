@@ -87,10 +87,10 @@ final class ProductTest extends TestCase
         self::assertSame($maxLengthName, $product->name());
     }
 
-    public function testNameIsNotTrimmedWhenStored(): void
+    public function testNameIsTrimmedWhenStored(): void
     {
         $product = Product::new('  Mechanical Keyboard  ', null);
 
-        self::assertSame('  Mechanical Keyboard  ', $product->name());
+        self::assertSame('Mechanical Keyboard', $product->name());
     }
 }

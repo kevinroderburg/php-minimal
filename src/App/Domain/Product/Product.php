@@ -11,18 +11,20 @@ final class Product
 {
     private const NAME_MAX_LENGTH = 255;
 
+    private readonly string $name;
+
     private function __construct(
         private readonly ?int $id,
-        private readonly string $name,
+        string $name,
         private readonly ?string $description,
     ) {
-        $trimmedName = trim($this->name);
+        $this->name = trim($name);
 
-        if ($trimmedName === '') {
+        if ($this->name === '') {
             throw new InvalidArgumentException('Product name must not be empty.');
         }
 
-        if (mb_strlen($trimmedName) > self::NAME_MAX_LENGTH) {
+        if (mb_strlen($this->name) > self::NAME_MAX_LENGTH) {
             throw new InvalidArgumentException(
                 sprintf('Product name must not exceed %d characters.', self::NAME_MAX_LENGTH),
             );
