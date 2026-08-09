@@ -16,7 +16,7 @@ final class Product
     private function __construct(
         private readonly ?int $id,
         string $name,
-        private readonly ?string $description,
+        private readonly ?string $description
     ) {
         $this->name = trim($name);
 

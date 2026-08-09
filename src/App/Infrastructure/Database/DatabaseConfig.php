@@ -12,7 +12,7 @@ final class DatabaseConfig
         public readonly string $host,
         public readonly string $database,
         public readonly string $username,
-        public readonly string $password,
+        public readonly string $password
     ) {
     }
 
@@ -22,7 +22,7 @@ final class DatabaseConfig
             host: getenv('DB_HOST') ?: 'mariadb',
             database: self::requireEnv('DB_DATABASE'),
             username: self::requireEnv('DB_USERNAME'),
-            password: self::requireEnv('DB_PASSWORD'),
+            password: self::requireEnv('DB_PASSWORD')
         );
     }
 

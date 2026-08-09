@@ -32,7 +32,7 @@ final class DatabaseConfigTest extends TestCase
             host: 'db.example.com',
             database: 'my_app',
             username: 'app_user',
-            password: 'secret',
+            password: 'secret'
         );
 
         self::assertSame('db.example.com', $databaseConfig->host);

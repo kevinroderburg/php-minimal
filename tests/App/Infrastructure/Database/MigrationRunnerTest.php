@@ -8,6 +8,7 @@ use App\Infrastructure\Database\ConnectionFactory;
 use App\Infrastructure\Database\DatabaseConfig;
 use App\Infrastructure\Database\MigrationRunner;
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -69,12 +70,12 @@ final class MigrationRunnerTest extends TestCase
 
         self::assertSame(
             ['001_create_table.sql', '002_add_name_column.sql'],
-            $this->getExecutedMigrationNames($pdo),
+            $this->getExecutedMigrationNames($pdo)
         );
 
         $columnStatement = $pdo->query("SHOW COLUMNS FROM `{$table}`");
 
-        $this->assertInstanceOf(\PDOStatement::class, $columnStatement);
+        $this->assertInstanceOf(PDOStatement::class, $columnStatement);
 
         $columns = $columnStatement->fetchAll(PDO::FETCH_COLUMN);
         $this->assertContains('id', $columns);

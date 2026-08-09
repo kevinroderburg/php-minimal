@@ -32,11 +32,9 @@ return (new Config())
         'single_quote' => true,
 
         'trailing_comma_in_multiline' => [
-            'elements' => [
-                'arrays',
-                'arguments',
-                'parameters',
-            ],
+            'elements' => ['arrays'],
         ],
+
+        'no_trailing_comma_in_singleline' => true,
     ])
     ->setFinder($finder);

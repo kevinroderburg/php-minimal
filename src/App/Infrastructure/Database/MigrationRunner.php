@@ -11,7 +11,7 @@ use Throwable;
 final class MigrationRunner
 {
     public function __construct(
-        private readonly ConnectionFactory $connectionFactory,
+        private readonly ConnectionFactory $connectionFactory
     ) {
     }
 

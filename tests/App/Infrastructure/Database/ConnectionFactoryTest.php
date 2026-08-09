@@ -7,6 +7,7 @@ namespace Tests\App\Infrastructure\Database;
 use App\Infrastructure\Database\ConnectionFactory;
 use App\Infrastructure\Database\DatabaseConfig;
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\TestCase;
 
 final class ConnectionFactoryTest extends TestCase
@@ -31,7 +32,7 @@ final class ConnectionFactoryTest extends TestCase
         $pdo = $factory->create();
         $statement = $pdo->query('SELECT DATABASE()');
 
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(PDOStatement::class, $statement);
 
         $databaseName = $statement->fetchColumn();
 
