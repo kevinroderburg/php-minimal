@@ -75,12 +75,12 @@ final class MigrationRunner
             if ($pdo->inTransaction()) {
                 $pdo->commit();
             }
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
 
-            throw new RuntimeException("Migration failed: {$migrationName}", previous: $e);
+            throw new RuntimeException("Migration failed: {$migrationName}", previous: $throwable);
         }
     }
 
