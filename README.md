@@ -219,7 +219,8 @@ All helper scripts run commands inside the PHP container:
 | `./bin/init.sh` | Bootstrap a copied template into a new project (see [Using this as a template](#using-this-as-a-template)) |
 | `./bin/up.sh` | Start containers |
 | `./bin/build.sh` | Build images and start containers |
-| `./bin/down.sh` | Stop containers |
+| `./bin/down.sh` | Stop and remove containers |
+| `./bin/stop.sh` | Stop containers without removing them (keeps them for a faster `docker compose start`) |
 | `./bin/composer.sh` | Run an arbitrary Composer command inside the container, e.g. `./bin/composer.sh require foo/bar` |
 | `./bin/migrate.sh` | Run pending database migrations (`bin/migrate.php`) |
 | `./bin/seed.sh` | Run database seeders (`bin/seed.php`) |
