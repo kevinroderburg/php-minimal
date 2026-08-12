@@ -2,6 +2,11 @@
 .env
 /.php-cs-fixer.cache
 /.phpunit.cache/
-/database/
 /vendor/
 /coverage/
+
+/docker/nginx/certs/*.crt
+/docker/nginx/certs/*.key
+
+.DS_Store
+Thumbs.db
