@@ -2,6 +2,11 @@
 
 Minimal modern PHP development template with Docker, PHP-FPM, Nginx and MariaDB.
 
+This repo is meant to be used as a **starting point for new projects**: copy the
+folder, run `./bin/init.sh <project-name>`, and you have an isolated stack with
+its own domain, database and (optionally) ports. See
+[Using this as a template](#using-this-as-a-template) below.
+
 ## Features
 
 - **PHP 8.4** with PHP-FPM
@@ -21,6 +26,10 @@ Minimal modern PHP development template with Docker, PHP-FPM, Nginx and MariaDB.
 
 ## Getting started
 
+> Starting a **new** project from this template? Use `./bin/init.sh <project-name>`
+> instead of step 1 below — see [Using this as a template](#using-this-as-a-template).
+> The steps here are for working with this template repo directly.
+
 ### 1. Clone and configure
 
 ```bash
@@ -34,6 +43,8 @@ Edit `.env` and set your values:
 | `COMPOSE_PROJECT_NAME` | Docker Compose project name |
 | `APP_DOMAIN` | Local domain (default: `php-minimal.local`) |
 | `PHP_IDE_SERVER_NAME` | IDE server name for path mapping (default: `php-minimal`) |
+| `HTTP_PORT` / `HTTPS_PORT` | Host ports for Nginx (default: `80` / `443`). Only change these if you run more than one project stack at once |
+| `DB_PORT` | Host port for MariaDB (default: `3306`). Same reasoning as above |
 | `DB_HOST` | MariaDB host (default: `mariadb`) |
 | `DB_DATABASE` | MariaDB database name |
 | `DB_USERNAME` | MariaDB user |
@@ -131,11 +142,18 @@ The app is available at [https://php-minimal.local](https://php-minimal.local).
 
 ## Docker services
 
-| Service | Container | Ports |
-|---|---|---|
-| PHP-FPM | `php-minimal-php` | 9000 (internal) |
-| Nginx | `php-minimal-nginx` | 80, 443 |
-| MariaDB | `php-minimal-mariadb` | 3306 |
+| Service | Ports |
+|---|---|
+| PHP-FPM | 9000 (internal only) |
+| Nginx | `${HTTP_PORT:-80}`, `${HTTPS_PORT:-443}` |
+| MariaDB | `${DB_PORT:-3306}` |
+
+Container names are **not** hardcoded — Compose derives them from
+`COMPOSE_PROJECT_NAME` (e.g. `php-graphql-php-1`). This, together with the
+`.env`-driven ports above, means two copies of this template can run at the
+same time without colliding, as long as each `.env` has a distinct
+`COMPOSE_PROJECT_NAME` (and distinct ports, if both need to bind to the host
+simultaneously).
 
 Database credentials are taken from `.env` and passed to the MariaDB container via `MARIADB_*` environment variables.
 
@@ -198,6 +216,7 @@ All helper scripts run commands inside the PHP container:
 
 | Script | Description |
 |---|---|
+| `./bin/init.sh` | Bootstrap a copied template into a new project (see [Using this as a template](#using-this-as-a-template)) |
 | `./bin/up.sh` | Start containers |
 | `./bin/build.sh` | Build images and start containers |
 | `./bin/down.sh` | Stop containers |
@@ -246,6 +265,41 @@ A VS Code / Cursor launch configuration is included in `.vscode/launch.json`.
 4. Set a breakpoint and open [https://php-minimal.local](https://php-minimal.local)
 
 `PHP_IDE_SERVER_NAME` in `.env` sets the server name used by `PHP_IDE_CONFIG` inside the container. It should match the server name configured in your IDE for correct path mapping.
+
+## Using this as a template
+
+To start a new project from this template:
+
+```bash
+cp -r php-minimal php-graphql
+cd php-graphql
+./bin/init.sh php-graphql              # domain defaults to php-graphql.local
+# or: ./bin/init.sh php-graphql graphql.local
+```
+
+`bin/init.sh` is safe to re-run and will not overwrite an existing `.env` or
+an existing certificate. It:
+
+- creates `.env` from `.env.example` and sets `COMPOSE_PROJECT_NAME`, `APP_DOMAIN`, `PHP_IDE_SERVER_NAME` and `DB_DATABASE`
+- renames the package in `composer.json`
+- updates `server_name` and the certificate paths in `docker/nginx/default.conf`
+- generates a fresh self-signed certificate for the new domain in `docker/nginx/certs/` (requires `openssl` on the host)
+
+Afterwards, follow the usual [Getting started](#getting-started) steps
+(hosts file, `composer install`, `./bin/build.sh`, migrate/seed).
+
+**What it does *not* do**, since it's specific to each project:
+
+- Remove the example `Product` domain (`src/App/**/Product`, its tests, and the
+  `database/migrations` / `database/seeds` files) — delete these once you start
+  building your own domain, or keep them around as a reference.
+- Touch `README.md` — update the title/description for the new project yourself.
+- Set up multiple projects to run *simultaneously*. The `.env`-driven ports
+  (`HTTP_PORT`, `HTTPS_PORT`, `DB_PORT`) let you avoid port collisions between
+  two stacks, but each still binds directly to the host. If running several
+  projects side by side becomes the norm rather than the exception, a shared
+  reverse proxy (e.g. Traefik) fronting all of them on a shared Docker network
+  is the more scalable next step.
 
 ## License
 
