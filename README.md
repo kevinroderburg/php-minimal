@@ -58,14 +58,33 @@ Edit `.env` and set your values:
 composer install
 ```
 
-### 3. Start the stack
+### 3. Generate an SSL certificate
+
+Certificates are **not** committed to the repo (`docker/nginx/certs/*.crt`
+and `*.key` are gitignored), so Nginx has nothing to serve on a fresh clone
+of this template. Generate a self-signed one for `php-minimal.local`:
+
+```bash
+mkdir -p docker/nginx/certs
+openssl req -x509 -newkey rsa:2048 -nodes -days 825 \
+    -keyout docker/nginx/certs/php-minimal.local.key \
+    -out docker/nginx/certs/php-minimal.local.crt \
+    -subj "/CN=php-minimal.local" \
+    -addext "subjectAltName=DNS:php-minimal.local"
+```
+
+> If you got here via `./bin/init.sh <project-name>` instead, this step is
+> already done for you — it generates the certificate for your project's
+> domain automatically.
+
+### 4. Start the stack
 
 ```bash
 ./bin/build.sh   # first run (builds images)
 ./bin/up.sh      # subsequent runs
 ```
 
-### 4. Configure local DNS
+### 5. Configure local DNS
 
 Add the following entry to your hosts file:
 
@@ -76,7 +95,7 @@ Add the following entry to your hosts file:
 - **Linux/macOS:** `/etc/hosts`
 - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
 
-### 5. Run migrations and seeders
+### 6. Run migrations and seeders
 
 ```bash
 ./bin/migrate.sh   # create the schema (e.g. the `products` table)
@@ -85,7 +104,9 @@ Add the following entry to your hosts file:
 
 The app is available at [https://php-minimal.local](https://php-minimal.local).
 
-> **Note:** The Nginx config and SSL certificates are set up for `php-minimal.local`. If you change `APP_DOMAIN`, update `docker/nginx/default.conf` and regenerate the certificates in `docker/nginx/certs/` accordingly.
+> **Note:** If you change `APP_DOMAIN` to something other than
+> `php-minimal.local`, update `docker/nginx/default.conf` and regenerate the
+> certificate in `docker/nginx/certs/` for the new domain accordingly.
 
 ## Project structure
 
