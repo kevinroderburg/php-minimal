@@ -11,6 +11,8 @@ Minimal modern PHP development template with Docker, PHP-FPM, Nginx and MariaDB.
 - **PHPUnit 13** for testing
 - **PHPStan** (level 8) for static analysis
 - **PHP CS Fixer** for code style
+- **Layered architecture example** (Domain / Application / Infrastructure / Presentation) with a `Product` entity, repository, service and controller
+- **Migrations & seeders** for MariaDB, driven by simple SQL files
 
 ## Requirements
 
@@ -32,6 +34,7 @@ Edit `.env` and set your values:
 | `COMPOSE_PROJECT_NAME` | Docker Compose project name |
 | `APP_DOMAIN` | Local domain (default: `php-minimal.local`) |
 | `PHP_IDE_SERVER_NAME` | IDE server name for path mapping (default: `php-minimal`) |
+| `DB_HOST` | MariaDB host (default: `mariadb`) |
 | `DB_DATABASE` | MariaDB database name |
 | `DB_USERNAME` | MariaDB user |
 | `DB_PASSWORD` | MariaDB user password |
@@ -62,6 +65,13 @@ Add the following entry to your hosts file:
 - **Linux/macOS:** `/etc/hosts`
 - **Windows:** `C:\Windows\System32\drivers\etc\hosts`
 
+### 5. Run migrations and seeders
+
+```bash
+./bin/migrate.sh   # create the schema (e.g. the `products` table)
+./bin/seed.sh       # load example data
+```
+
 The app is available at [https://php-minimal.local](https://php-minimal.local).
 
 > **Note:** The Nginx config and SSL certificates are set up for `php-minimal.local`. If you change `APP_DOMAIN`, update `docker/nginx/default.conf` and regenerate the certificates in `docker/nginx/certs/` accordingly.
@@ -70,16 +80,50 @@ The app is available at [https://php-minimal.local](https://php-minimal.local).
 
 ```
 .
-├── bin/                # Helper scripts (Docker wrappers)
+├── .cursor/                     # Cursor IDE rules and settings
+├── .vscode/
+│   └── launch.json              # Xdebug launch configuration
+├── bin/                         # Helper scripts (Docker wrappers)
+├── database/
+│   ├── migrations/              # Schema migrations, executed in filename order
+│   └── seeds/                   # Seed data, executed in filename order
 ├── docker/
-│   ├── nginx/          # Nginx config and SSL certificates
-│   └── php/            # PHP Dockerfile and configuration
-├── public/             # Web root (document root)
+│   ├── nginx/
+│   │   ├── certs/                # Self-signed SSL certificate and key
+│   │   └── default.conf
+│   └── php/
+│       ├── Dockerfile
+│       └── conf.d/                # php.ini and xdebug.ini
+├── public/                      # Web root (document root)
 │   └── index.php
-├── src/App/            # Application source code (PSR-4: App\)
-├── tests/              # PHPUnit tests (PSR-4: Tests\)
-├── .env.example        # Environment variable template
-├── compose.yaml        # Docker Compose services
+├── src/App/                     # Application source code (PSR-4: App\)
+│   ├── Application/
+│   │   └── Product/
+│   │       └── ProductService.php
+│   ├── Domain/
+│   │   └── Product/
+│   │       ├── Product.php
+│   │       └── ProductRepositoryInterface.php
+│   ├── Infrastructure/
+│   │   ├── Database/
+│   │   │   ├── ConnectionFactory.php
+│   │   │   ├── DatabaseConfig.php
+│   │   │   ├── MigrationRunner.php
+│   │   │   └── SeedRunner.php
+│   │   └── Product/
+│   │       └── ProductRepository.php
+│   └── Presentation/
+│       └── Product/
+│           └── ProductController.php
+├── tests/App/                   # PHPUnit tests (PSR-4: Tests\), mirroring src/App
+│   ├── Application/Product/
+│   ├── Domain/Product/
+│   ├── Infrastructure/
+│   │   ├── Database/
+│   │   └── Product/
+│   └── Presentation/Product/
+├── .env.example                 # Environment variable template
+├── compose.yaml                 # Docker Compose services
 ├── composer.json
 ├── phpunit.xml
 └── phpstan.neon
@@ -95,6 +139,59 @@ The app is available at [https://php-minimal.local](https://php-minimal.local).
 
 Database credentials are taken from `.env` and passed to the MariaDB container via `MARIADB_*` environment variables.
 
+## Database
+
+### Schema
+
+The example schema lives in `database/migrations/` and is applied in filename order by `MigrationRunner`, run via `bin/migrate.php` (invoked through `./bin/migrate.sh`). It tracks executed migrations in a `migration_versions` table so each migration only runs once:
+
+| Migration | Description |
+|---|---|
+| `001_create_products_table.sql` | Creates the `products` table (`id`, `name`, `created_at`) |
+| `002_add_description_to_products.sql` | Adds a nullable `description` column to `products` |
+
+### Seed data
+
+Example data lives in `database/seeds/` and is applied in filename order by `SeedRunner`, run via `bin/seed.php` (invoked through `./bin/seed.sh`):
+
+| Seed | Description |
+|---|---|
+| `001_insert_products.sql` | Inserts a handful of example products |
+
+Run both with:
+
+```bash
+./bin/migrate.sh
+./bin/seed.sh
+```
+
+## Example domain: Products
+
+The template ships with a small end-to-end example built around a `Product` entity to illustrate the layered architecture:
+
+- **Domain** — `Product` (immutable, self-validating entity) and `ProductRepositoryInterface`
+- **Application** — `ProductService`, orchestrating use cases against the repository interface
+- **Infrastructure** — `ProductRepository` (PDO/MariaDB implementation), plus `ConnectionFactory`, `DatabaseConfig`, `MigrationRunner` and `SeedRunner`
+- **Presentation** — `ProductController`, exposing the data as JSON
+
+### API
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | Returns all products as JSON |
+
+Example response:
+
+```json
+[
+    {
+        "id": 1,
+        "name": "Mechanical Keyboard",
+        "description": "A tactile mechanical keyboard with hot-swappable switches."
+    }
+]
+```
+
 ## Development
 
 All helper scripts run commands inside the PHP container:
@@ -102,14 +199,18 @@ All helper scripts run commands inside the PHP container:
 | Script | Description |
 |---|---|
 | `./bin/up.sh` | Start containers |
-| `./bin/build.sh` | Build and start containers |
+| `./bin/build.sh` | Build images and start containers |
 | `./bin/down.sh` | Stop containers |
+| `./bin/composer.sh` | Run an arbitrary Composer command inside the container, e.g. `./bin/composer.sh require foo/bar` |
+| `./bin/migrate.sh` | Run pending database migrations (`bin/migrate.php`) |
+| `./bin/seed.sh` | Run database seeders (`bin/seed.php`) |
 | `./bin/test.sh` | Run PHPUnit tests |
-| `./bin/phpunit.sh` | Run PHPUnit with optional arguments |
+| `./bin/phpunit.sh` | Run PHPUnit with optional arguments, e.g. `./bin/phpunit.sh --filter=ProductTest` |
 | `./bin/coverage.sh` | Generate HTML coverage report in `coverage/` |
 | `./bin/analyse.sh` | Run PHPStan static analysis |
 | `./bin/cs-fix.sh` | Fix code style with PHP CS Fixer |
 | `./bin/autoload.sh` | Regenerate optimized autoloader |
+| `./bin/check.sh` | Quality gate: regenerates the autoloader, then runs CS Fixer, PHPStan, tests and coverage in sequence |
 
 Equivalent Composer scripts (inside the container):
 
